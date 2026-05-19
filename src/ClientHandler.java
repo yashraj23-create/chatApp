@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
-
+    String name;
     Socket socket;
     ChatServer server;
     BufferedReader in;
@@ -26,6 +26,10 @@ public class ClientHandler implements Runnable {
         out.println(msg);
     }
 
+    public void sendPrivate(String message){
+        out.println(message);
+    }
+
     public void sendMessage(String msg){
         out.println(msg);
     }
@@ -33,15 +37,34 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
+            this.name = in.readLine();
+
+            System.out.println(STR."\{name} joined");
 
             String msg;
 
-            while ((msg = in.readLine()) != null) {
+            while((msg = in.readLine()) != null){
 
-                System.out.println(msg);
-                server.broadcast(msg, this);
+                String[] arr = msg.split("\\|", 4);
+
+                String time = arr[0];
+                String mode = arr[1];
+                String sender = arr[2];
+                String actualMsg = arr[3];
+
+                String finalMsg =
+                        STR."[\{time}] \{sender} : \{actualMsg}";
+
+                if(mode.equalsIgnoreCase("public")){
+
+                    server.broadcast(finalMsg, this);
+
+                } else {
+
+                    server.particular(mode, finalMsg);
+
+                }
             }
-
         } catch (Exception e) {
 
             System.out.println("Client disconnected");

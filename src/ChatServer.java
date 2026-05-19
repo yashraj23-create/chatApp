@@ -5,7 +5,7 @@ import java.util.List;
 
 public class ChatServer{
 
-    static List<ClientHandler> clients =
+    static final List<ClientHandler> clients =
             new ArrayList<>();
 
     public void broadcast(String msg, ClientHandler sender) {
@@ -13,6 +13,21 @@ public class ChatServer{
             for (ClientHandler client : clients) {
                 if (client != sender) {
                     client.sendMessage(msg);
+                }
+            }
+        }
+    }
+
+    public void particular(String name,String msg){
+        synchronized (clients) {
+            System.out.println(STR."Searching for: \{name}");
+
+            for(ClientHandler clientHandler: clients){
+
+                if(clientHandler.name.equalsIgnoreCase(name)){
+                    System.out.println(STR."FOUND : \{name}");
+
+                    clientHandler.sendPrivate(msg);
                 }
             }
         }
@@ -40,7 +55,6 @@ public class ChatServer{
             clients.add(clientHandler);
 
             SendingThread sendingThread = new SendingThread(socket,server);
-
 
 
             new Thread(clientHandler).start();
