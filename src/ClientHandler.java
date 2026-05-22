@@ -37,9 +37,22 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            this.name = in.readLine();
 
-            System.out.println(STR."\{name} joined");
+            while(true) {
+                String cli = in.readLine();
+                if(cli == null){
+                    break;
+                }
+                boolean exist = server.duplicates(cli);
+
+                if (exist) {
+                    out.println("already there");
+                } else {
+                    out.println("Accepted");
+                    this.name = cli;
+                    System.out.println(STR."\{name} joined"); break;
+                }
+            }
 
             String msg;
 

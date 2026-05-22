@@ -23,7 +23,6 @@ public class Client {
 
         LocalDateTime now = LocalDateTime.now();
 
-
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("HH:mm");
 
@@ -40,10 +39,36 @@ public class Client {
 
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-        System.out.println("Enter your name before conversation : ");
-        String name = userInput.readLine();
-        out.println(name);
+        String name1;
 
+        while (true) {
+            System.out.println("Enter your name : ");
+
+            name1 = userInput.readLine();
+
+            if (name1 == null) {
+                System.out.println("Input stream closed");
+                break;
+            }
+
+            out.println(name1);
+
+            String ret = in.readLine();
+
+            if (ret == null) {
+                System.out.println("Server disconnected");
+                socket.close();
+                break;
+            }
+
+            if (ret.equalsIgnoreCase("Accepted")) {
+                System.out.println("you joined group chat");
+                break;
+            } else {
+                System.out.println(ret);
+            }
+        }
+        String name = name1;
         // Sender thread
         new Thread(() -> {
             try {

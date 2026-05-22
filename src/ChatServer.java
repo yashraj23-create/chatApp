@@ -18,13 +18,22 @@ public class ChatServer{
         }
     }
 
+    public boolean duplicates(String name){
+        for(ClientHandler cl : clients){
+            if(cl.name != null && cl.name.equalsIgnoreCase(name)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void particular(String name,String msg){
         synchronized (clients) {
-            System.out.println(STR."Searching for: \{name}");
 
             for(ClientHandler clientHandler: clients){
 
-                if(clientHandler.name.equalsIgnoreCase(name)){
+                if(clientHandler.name != null &&
+                        clientHandler.name.equalsIgnoreCase(name)){
                     System.out.println(STR."FOUND : \{name}");
 
                     clientHandler.sendPrivate(msg);
@@ -55,7 +64,6 @@ public class ChatServer{
             clients.add(clientHandler);
 
             SendingThread sendingThread = new SendingThread(socket,server);
-
 
             new Thread(clientHandler).start();
 
