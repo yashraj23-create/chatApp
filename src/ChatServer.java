@@ -5,29 +5,83 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChatServer {
+    public static final String RED  = "\u001B[31m";
+
+    public static HashMap<String, Group> groups = new HashMap<>();
 
     static final List<ClientHandler> clients = new CopyOnWriteArrayList<>();
 
-    // message ID counter
     static final AtomicInteger messageCounter = new AtomicInteger(0);
 
-    // last 20 messages
     private final List<String> history = new CopyOnWriteArrayList<>();
     private static final int MAX_HISTORY = 20;
 
-    // offline queue: username (lowercase) → queued messages
     final Map<String, Queue<String>> offlineQueue = new ConcurrentHashMap<>();
 
-    // ── Broadcast to all except sender ──────────────────────────────
     public void broadcast(String msg, ClientHandler sender) {
         for (ClientHandler client : clients) {
-            if (client != sender) {
+            if (client != sender && client.name != null) {
                 client.sendMessage(msg);
             }
         }
     }
 
-    // ── Send to a specific user, returns false if not online ─────────
+    public void GroupMessage(String name , String message){
+        Group group = groups.get(name);
+        Set<String> set = group.getMembers();
+        for(String s : set){
+            for (ClientHandler client : clients) {
+                if (client.name.equalsIgnoreCase(s)) {
+                    client.sendMessage(message);
+                }
+            }
+        }
+    }
+
+    public boolean groupName(String msg){
+        return !groups.containsKey(msg);
+    }
+
+    public boolean groupName1(String msg){
+        return groups.containsKey(msg);
+    }
+
+   public void LogPrinter(String msg){
+       System.out.println(STR."\{RED}" + msg);
+   }
+
+   void AddTo(String name, String[] mNames){
+        Group group = new Group(name);
+        for(String s : mNames){
+            group.addMember(s);
+        }
+        groups.put(name,group);
+   }
+
+    public void SendingMsg(String name){
+        System.out.println("creating group has been called");
+        for (ClientHandler client : clients) {
+            if (client.name.equalsIgnoreCase(name)) {
+                client.sendMessage(" you have been added to group");
+            }
+        }
+    }
+
+    public Boolean CheckNames(String[] name){
+        System.out.println("checking group name has been called");
+        HashSet<String> h = new HashSet<>();
+            for(ClientHandler client : clients){
+                h.add(client.name);
+            }
+            for(String nam : name){
+                if(!h.contains(nam)){
+                    return false;
+                }
+            }
+        System.out.println("name validation completed");
+            return true;
+    }
+
     public boolean sendPrivateTo(String name, String msg) {
         for (ClientHandler client : clients) {
             if (client.name != null && client.name.equalsIgnoreCase(name)) {
@@ -38,14 +92,6 @@ public class ChatServer {
         return false;
     }
 
-    // ── Queue message for offline user ───────────────────────────────
-    public void queueOffline(String name, String msg) {
-        offlineQueue
-                .computeIfAbsent(name.toLowerCase(), k -> new LinkedList<>())
-                .add(msg);
-    }
-
-    // ── Check if username exists among connected clients ─────────────
     public boolean searchname(String name) {
         for (ClientHandler cl : clients) {
             if (cl.name != null && cl.name.equalsIgnoreCase(name)) return true;
@@ -53,7 +99,6 @@ public class ChatServer {
         return false;
     }
 
-    // ── Check for duplicate on registration ──────────────────────────
     public boolean duplicates(String name) {
         for (ClientHandler cl : clients) {
             if (cl.name != null && cl.name.equalsIgnoreCase(name)) return true;
@@ -61,7 +106,6 @@ public class ChatServer {
         return false;
     }
 
-    // ── History ───────────────────────────────────────────────────────
     public void addToHistory(String msg) {
         history.add(msg);
         if (history.size() > MAX_HISTORY) {
@@ -73,7 +117,6 @@ public class ChatServer {
         return Collections.unmodifiableList(history);
     }
 
-    // ── Main ──────────────────────────────────────────────────────────
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(38297);
         ChatServer server = new ChatServer();
@@ -81,7 +124,6 @@ public class ChatServer {
         System.out.println("\u001B[32m[SERVER] Started on port 38297\u001B[0m");
         System.out.println("\u001B[33m[SERVER] Waiting for clients...\u001B[0m");
 
-        // one thread pool for all client handlers
         ExecutorService pool = Executors.newCachedThreadPool();
 
         while (true) {

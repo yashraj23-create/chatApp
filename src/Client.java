@@ -52,12 +52,19 @@ public class Client {
         safePrint(STR."\{CYAN}  /history\{RESET}  → last 20 messages");
         safePrint(STR."\{CYAN}  /help\{RESET}  → show this menu");
         safePrint(STR."\{CYAN}  /quit\{RESET}  → disconnect");
+        safePrint(STR."\{CYAN}  /GM <groupname> <message> \{RESET}  → message in particular group");
+        safePrint(STR."\{CYAN}  /gc <groupname> <usernames> \{RESET}  → create new group");
+        safePrint(STR."\{CYAN}  /group messages <groupname> \{RESET}  → create new group");
         safePrint(STR."\{YELLOW}─────────────────────────────────────\{RESET}");
     }
 
     public static void main(String[] args) throws IOException {
 
         BlockingQueue<String> serverResponses = new LinkedBlockingQueue<>();
+        BlockingQueue<String> checkQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<String> GroupQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<String> GrQueue = new LinkedBlockingQueue<>();
+
 
         System.out.println(BOLD + CYAN);
         System.out.println("  ╔══════════════════════════════╗");
@@ -73,6 +80,7 @@ public class Client {
 
         // ── Name registration ──────────────────────────────────────
         String name = null;
+
         while (true) {
             System.out.print(STR."\{YELLOW}Enter your username: \{RESET}");
             String input = userInput.readLine();
@@ -109,7 +117,16 @@ public class Client {
                     // internal protocol responses go to queue
                     if (msg.startsWith("---##")) {
                         serverResponses.put(msg.substring(5)); // strip prefix
-                    } else {
+                    } else if (msg.startsWith("---q11")) {
+                        checkQueue.put(msg.substring(6));
+                    }
+                    else if (msg.startsWith("---q13")) {
+                        GrQueue.put(msg.substring(6));
+                    }
+                    else if (msg.startsWith("---q12")) {
+                            GroupQueue.put(msg.substring(6));
+
+                        } else {
                         safePrint(msg);
                     }
                 }
@@ -120,6 +137,8 @@ public class Client {
                 try { socket.close(); } catch (Exception ignored) {}
             }
         }, "receiver").start();
+
+       // Sender
 
         new Thread(() -> {
             try {
@@ -170,13 +189,51 @@ public class Client {
                         printHelp();
 
                     } else if (input.equalsIgnoreCase("/quit")) {
+
                         out.println("CMD|quit");
                         running = false;
                         socket.close();
                         safePrint(STR."\{YELLOW}  Goodbye, \{myName}!\{RESET}");
                         break;
 
-                    } else {
+                    }
+                    else if(input.startsWith("/gc ")){
+                        int end = input.indexOf(" ", 4);
+                        String groupName = input.substring(4,end);
+                        out.println(STR."CMD|GROUP|\{groupName}");
+                        String check = GroupQueue.take();
+
+                        if(check.equalsIgnoreCase("group name already taken")) continue;
+
+                        String inpu = input.substring(end + 1);
+
+                        out.println(STR."CMD|CHECK|\{inpu}");
+
+                        String re = checkQueue.take();
+                        System.out.println("-----");
+                        System.out.println(re);
+                        System.out.println("------");
+                        if(re.equalsIgnoreCase("username doesn't exist")) continue;
+
+                        out.println(STR."/GC \{input.substring(4)}");
+                        System.out.println(STR."\{CYAN}══════════════════════════════════════════════");
+                        System.out.println(STR."\{YELLOW} you created group '\{groupName}' and people have been added  :\{RESET}" );
+
+                    }
+                    else if(input.startsWith("/GM ")){
+
+                        int end1 = input.indexOf(" ", 4);
+                        String groupName1 = input.substring(4,end1);
+                        out.println(STR."CMD|group|\{groupName1}");
+                        String re1 = GrQueue.take();
+                        if(re1.equalsIgnoreCase("incorrect groupName")) continue;
+
+                        String message = input.substring(end1 + 1).trim();
+                        out.println(STR."\{myName}|[ \{timestamp} ]|\{groupName1}|\{message}");
+                    }
+                    else if(input.startsWith("/group messages ")){
+                    }
+                    else {
                         safePrint(STR."\{RED}  Unknown command. Type /help for commands.\{RESET}");
                     }
                 }

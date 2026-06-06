@@ -9,7 +9,6 @@ public class ClientHandler implements Runnable {
     ChatServer server;
     BufferedReader in;
     PrintWriter out;
-
     static final String RESET  = "\u001B[0m";
     static final String YELLOW = "\u001B[33m";
     static final String CYAN   = "\u001B[36m";
@@ -35,6 +34,18 @@ public class ClientHandler implements Runnable {
         out.println("---##" + msg);
     }
 
+    public void send1Control(String msg) {
+        out.println("---q11" + msg);
+    }
+
+    public void sendC2Control(String msg) {
+        out.println("---q12" + msg);
+    }
+
+    public void sendC3Control(String msg) {
+        out.println("---q13" + msg);
+    }
+
     @Override
     public void run() {
         try {
@@ -55,8 +66,6 @@ public class ClientHandler implements Runnable {
                     sendMessage("ACCEPTED");
                     System.out.println(STR."\{GREEN}[+] \{name} connected\{RESET}");
 
-                    server.broadcast(STR."\{YELLOW}[SERVER] \{name} joined the chat.\{RESET}", this);
-
                     Queue<String> pending = server.offlineQueue.get(name.toLowerCase());
                     if (pending != null && !pending.isEmpty()) {
                         sendMessage(STR."\{YELLOW}[SERVER] You have \{pending.size()} unread message(s):\{RESET}");
@@ -69,6 +78,8 @@ public class ClientHandler implements Runnable {
                 }
             }
 
+                server.broadcast(STR."\{YELLOW}[SERVER] \{name} joined the chat.\{RESET}", this);
+
             String line;
             while ((line = in.readLine()) != null) {
                 line = line.trim();
@@ -77,6 +88,28 @@ public class ClientHandler implements Runnable {
                 if (line.startsWith("CMD|")) {
                     handleCommand(line.substring(4));
                     continue;
+                }
+
+                if(line.startsWith("/GM")) {
+                    String[] part = line.substring(4).split("\\|");
+                    String msg = STR."\{part[0]} \{part[1]} : \{part[3]}";
+                    server.GroupMessage(part[2],msg);
+                }
+
+                if(line.startsWith("/GC")){
+                    server.LogPrinter("hey this group creation has started");
+                    int end = line.indexOf(" ", 4);
+
+                  String groupName = line.substring(4,end);
+
+                  String names[] = line.substring(end).split(" ");
+
+                  server.AddTo(groupName,names);
+                   server.LogPrinter("hey names are being send");
+                  for(String Nm : names){
+                      server.SendingMsg(Nm);
+                  }
+                  continue;
                 }
 
                 String[] parts = line.split("\\|", 5);
@@ -100,7 +133,6 @@ public class ClientHandler implements Runnable {
                     if (delivered) {
                         sendMessage(formatted);
                     } else {
-                        server.queueOffline(recipient, formatted);
                         sendMessage(STR."\{YELLOW}[SERVER] \{recipient} is offline. Message queued.\{RESET}");
                     }
                     server.addToHistory(formatted);
@@ -114,6 +146,24 @@ public class ClientHandler implements Runnable {
     }
 
     private void handleCommand(String cmd) {
+        if(cmd.startsWith("GROUP|")){
+            String group = cmd.substring(6);
+            if(server.groupName(group)){
+                sendC2Control("valid group name");
+            }else{
+                sendC2Control("group name already taken");
+            }
+        }
+
+        if(cmd.startsWith("group|")){
+            String group = cmd.substring(6);
+            if(server.groupName1(group)){
+                sendC2Control("valid group name");
+            }else{
+                sendC2Control("incorrect groupName");
+            }
+        }
+
         if (cmd.startsWith("check|")) {
             String target = cmd.substring(6).trim();
             if (server.searchname(target)) {
@@ -121,14 +171,27 @@ public class ClientHandler implements Runnable {
             } else {
                 sendControl("not exist");
             }
+        }
 
-        } else if (cmd.equalsIgnoreCase("online")) {
+        else if(cmd.startsWith("CHECK|")){
+            String names[] = cmd.substring(6).trim().split("\\s+");
+            boolean get = server.CheckNames(names);
+            if(!get){
+                server.LogPrinter("username doesn't exist");
+                send1Control("username doesn't exist");
+            }else{
+                server.LogPrinter("valid1");
+                send1Control("valid1");
+            }
+        }
+
+        else if (cmd.equalsIgnoreCase("online")) {
             StringBuilder sb = new StringBuilder();
             sb.append(YELLOW).append("[SERVER] Online users: ").append(RESET);
             for (ClientHandler c : ChatServer.clients) {
                 if (c.name != null) {
                     sb.append(c.name.equals(this.name) ? STR."\{GREEN}\{c.name} (you)\{RESET}" : c.name);
-                    sb.append("  ");
+                    sb.append(" ");
                 }
             }
             sendMessage(sb.toString().trim());
