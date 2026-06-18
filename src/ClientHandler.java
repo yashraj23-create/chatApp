@@ -66,14 +66,6 @@ public class ClientHandler implements Runnable {
                     sendMessage("ACCEPTED");
                     System.out.println(STR."\{GREEN}[+] \{name} connected\{RESET}");
 
-                    Queue<String> pending = server.offlineQueue.get(name.toLowerCase());
-                    if (pending != null && !pending.isEmpty()) {
-                        sendMessage(STR."\{YELLOW}[SERVER] You have \{pending.size()} unread message(s):\{RESET}");
-                        while (!pending.isEmpty()) {
-                            sendMessage(pending.poll());
-                        }
-                        server.offlineQueue.remove(name.toLowerCase());
-                    }
                     break;
                 }
             }

@@ -16,8 +16,6 @@ public class ChatServer {
     private final List<String> history = new CopyOnWriteArrayList<>();
     private static final int MAX_HISTORY = 20;
 
-    final Map<String, Queue<String>> offlineQueue = new ConcurrentHashMap<>();
-
     public void broadcast(String msg, ClientHandler sender) {
         for (ClientHandler client : clients) {
             if (client != sender && client.name != null) {
