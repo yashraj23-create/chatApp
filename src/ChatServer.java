@@ -26,8 +26,20 @@ public class ChatServer {
         }
     }
 
+    public void sendM(String groupname, String name){
+        Group g = groups.get(groupname);
+        List<String> l =  g.getMessages();
+        for (ClientHandler client : clients) {
+            if (client.name.equalsIgnoreCase(name)) {
+                client.sendMessage(String.valueOf(l));
+            }
+        }
+    }
+
     public void GroupMessage(String name , String message){
+        System.out.println("hey group message started");
         Group group = groups.get(name);
+        group.addMessage(message);
         Set<String> set = group.getMembers();
         for(String s : set){
             for (ClientHandler client : clients) {

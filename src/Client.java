@@ -229,9 +229,10 @@ public class Client {
                         if(re1.equalsIgnoreCase("incorrect groupName")) continue;
 
                         String message = input.substring(end1 + 1).trim();
-                        out.println(STR."\{myName}|[ \{timestamp} ]|\{groupName1}|\{message}");
+                        out.println(STR."/GM \{myName}|[ \{timestamp} ]|\{groupName1}|\{message}");
                     }
                     else if(input.startsWith("/group messages ")){
+                        out.println(STR."\{input}|\{myName} ");
                     }
                     else {
                         safePrint(STR."\{RED}  Unknown command. Type /help for commands.\{RESET}");

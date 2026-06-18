@@ -96,6 +96,13 @@ public class ClientHandler implements Runnable {
                     server.GroupMessage(part[2],msg);
                 }
 
+                if(line.startsWith("/group messages ")){
+                  String[] part = line.split("\\|");
+                  String groupName = part[0].substring(16).trim();
+                  server.sendM(groupName,part[1]);
+
+                }
+
                 if(line.startsWith("/GC")){
                     server.LogPrinter("hey this group creation has started");
                     int end = line.indexOf(" ", 4);
@@ -158,9 +165,9 @@ public class ClientHandler implements Runnable {
         if(cmd.startsWith("group|")){
             String group = cmd.substring(6);
             if(server.groupName1(group)){
-                sendC2Control("valid group name");
+                sendC3Control("valid group name");
             }else{
-                sendC2Control("incorrect groupName");
+                sendC3Control("incorrect groupName");
             }
         }
 
